@@ -1,0 +1,21 @@
+{
+  "name": "joyride",
+  "homepage": "https://github.com/zurb/joyride",
+  "authors": [
+    "www.zurb.com"
+  ],
+  "description": "jQuery feature tour plugin",
+  "main": "jquery.joyride-2.1.js",
+  "keywords": [
+    "tour",
+    "jquery"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
