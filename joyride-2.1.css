@@ -1,3 +1,7 @@
+/* 
+    .joyride-next-tip and .joyride-next-tip:hover classes are cleared
+*/
+
 /* Artfully masterminded by ZURB */
 body {
   position: relative;
@@ -160,7 +164,9 @@ body {
 
 /* Button Style */
 .joyride-tip-guide .joyride-next-tip {
-  width: auto;
+    /*removed to have button style similar to other buttons in CQG M*/
+
+  /*width: auto;
   padding: 6px 18px 4px;
   font-size: 13px;
   text-decoration: none;
@@ -180,11 +186,13 @@ body {
           border-radius: 2px;
   -webkit-box-shadow: 0px 1px 0px rgba(255,255,255,0.3) inset;
      -moz-box-shadow: 0px 1px 0px rgba(255,255,255,0.3) inset;
-          box-shadow: 0px 1px 0px rgba(255,255,255,0.3) inset;
+          box-shadow: 0px 1px 0px rgba(255,255,255,0.3) inset;*/
 }
 
 .joyride-next-tip:hover {
-  color: rgb(255,255,255) !important;
+  /*removed to have button style similar to other buttons in CQG M*/
+
+  /*color: rgb(255,255,255) !important;
   border: solid 1px rgb(0,60,180) !important;
   background: rgb(43,128,255);
   background: -moz-linear-gradient(top, rgb(43,128,255) 0%, rgb(29,102,211) 100%);
@@ -193,7 +201,7 @@ body {
   background: -o-linear-gradient(top, rgb(43,128,255) 0%,rgb(29,102,211) 100%);
   background: -ms-linear-gradient(top, rgb(43,128,255) 0%,rgb(29,102,211) 100%);
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2b80ff', endColorstr='#1d66d3',GradientType=0 );
-  background: linear-gradient(top, rgb(43,128,255) 0%,rgb(29,102,211) 100%);
+  background: linear-gradient(top, rgb(43,128,255) 0%,rgb(29,102,211) 100%);*/
 }
 
 .joyride-timer-indicator-wrap {

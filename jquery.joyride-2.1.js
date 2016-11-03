@@ -1,4 +1,12 @@
-  /*
+/*
+List of chages:
+1) New setting 'targetContext' was added to allow user to control which elements will be picked up as target for help.
+2) Offset for help is now calculated with a check of target element scroll, and if it is scrolled, parent offset is taken.
+3) If there is no space outside of the target element to show help, it will be shown inside in the upper left corner.
+4) Phone mode is turned off.
+*/
+
+/*
  * jQuery Foundation Joyride Plugin 2.1
  * http://foundation.zurb.com
  * Copyright 2013, ZURB
@@ -39,6 +47,7 @@
       'postRideCallback'     : $.noop,    // A method to call once the tour closes (canceled or complete)
       'preStepCallback'      : $.noop,    // A method to call before each step
       'postStepCallback'     : $.noop,    // A method to call after each step
+      'targetContext'        : document,  // Context to search target element in when it is selected by class
       'template' : { // HTML segments for tip layout
         'link'    : '<a href="#close" class="joyride-close-tip">X</a>',
         'timer'   : '<div class="joyride-timer-indicator-wrap"><span class="joyride-timer-indicator"></span></div>',
@@ -75,10 +84,10 @@
             settings.attempts = 0;
 
             settings.tipLocationPatterns = {
-              top: ['bottom'],
-              bottom: [], // bottom should not need to be repositioned
-              left: ['right', 'top', 'bottom'],
-              right: ['left', 'top', 'bottom']
+              top: ['bottom', 'bottom-right', 'inside', 'inside-right'],
+              bottom: ['bottom-right', 'inside', 'inside-right'],
+              left: ['right', 'top', 'bottom', 'bottom-right', 'inside', 'inside-right'],
+              right: ['left', 'top', 'bottom', 'bottom-right', 'inside', 'inside-right']
             };
 
             // are we using jQuery 1.7+
@@ -129,7 +138,7 @@
 
             settings.$document.on('click.joyride', '.joyride-close-tip', function (e) {
               e.preventDefault();
-              methods.end(true /* isAborted */);
+              methods.end();
             });
 
             settings.$window.bind('resize.joyride', function (e) {
@@ -353,11 +362,12 @@
 
       // detect phones with media queries if supported.
       is_phone : function () {
-        if (Modernizr) {
+        /*if (Modernizr) {
           return Modernizr.mq('only screen and (max-width: 767px)');
         }
 
-        return (settings.$window.width() < 767) ? true : false;
+        return (settings.$window.width() < 767) ? true : false;*/
+          return false;
       },
 
       support_localstorage : function () {
@@ -403,7 +413,7 @@
               if (id) {
                 return $(settings.document.getElementById(id));
               } else if (cl) {
-                return $('.' + cl).filter(":visible").first();
+                  return $(settings.targetContext).find('.' + cl).filter(":visible").first();
               } else {
                 return $('body');
               }
@@ -481,40 +491,75 @@
               topAdjustment = settings.tipSettings.tipAdjustmentY ? parseInt(settings.tipSettings.tipAdjustmentY) : 0,
               leftAdjustment = settings.tipSettings.tipAdjustmentX ? parseInt(settings.tipSettings.tipAdjustmentX) : 0;
 
+            var targetOffset = this.correctOffset(settings.$target);
+
             if (methods.bottom()) {
               settings.$next_tip.css({
-                top: (settings.$target.offset().top + nub_height + settings.$target.outerHeight() + topAdjustment),
-                left: settings.$target.offset().left + leftAdjustment});
+                  top: (targetOffset.top + nub_height + settings.$target.outerHeight() + topAdjustment),
+                  left: targetOffset.left + leftAdjustment
+              });
 
               if (/right/i.test(settings.tipSettings.nubPosition)) {
-                settings.$next_tip.css('left', settings.$target.offset().left - settings.$next_tip.outerWidth() + settings.$target.outerWidth());
+                  settings.$next_tip.css('left', targetOffset.left - settings.$next_tip.outerWidth() + settings.$target.outerWidth());
               }
 
               methods.nub_position($nub, settings.tipSettings.nubPosition, 'top');
 
+            } else if (methods.bottomRight()) {
+
+                settings.$next_tip.css({
+                    top: (targetOffset.top + nub_height + settings.$target.outerHeight() + topAdjustment),
+                    left: targetOffset.left + settings.$target.outerWidth() + leftAdjustment - settings.$next_tip.outerWidth()
+                });
+
+                methods.nub_position($nub, settings.tipSettings.nubPosition, 'top-right');
+
             } else if (methods.top()) {
 
               settings.$next_tip.css({
-                top: (settings.$target.offset().top - settings.$next_tip.outerHeight() - nub_height + topAdjustment),
-                left: settings.$target.offset().left + leftAdjustment});
+                  top: (targetOffset.top - settings.$next_tip.outerHeight() - nub_height + topAdjustment),
+                  left: targetOffset.left + leftAdjustment
+              });
 
               methods.nub_position($nub, settings.tipSettings.nubPosition, 'bottom');
 
             } else if (methods.right()) {
 
               settings.$next_tip.css({
-                top: settings.$target.offset().top + topAdjustment,
-                left: (settings.$target.outerWidth() + settings.$target.offset().left + nub_width) + leftAdjustment});
+                  top: targetOffset.top + topAdjustment,
+                  left: (settings.$target.outerWidth() + targetOffset.left + nub_width) + leftAdjustment
+              });
 
               methods.nub_position($nub, settings.tipSettings.nubPosition, 'left');
 
             } else if (methods.left()) {
 
               settings.$next_tip.css({
-                top: settings.$target.offset().top + topAdjustment,
-                left: (settings.$target.offset().left - settings.$next_tip.outerWidth() - nub_width) + leftAdjustment});
+                  top: targetOffset.top + topAdjustment,
+                  left: (targetOffset.left - settings.$next_tip.outerWidth() - nub_width) + leftAdjustment
+              });
 
               methods.nub_position($nub, settings.tipSettings.nubPosition, 'right');
+
+            }
+            else if (methods.inside()) {
+
+                settings.$next_tip.css({
+                    top: (targetOffset.top + nub_height + topAdjustment),
+                    left: targetOffset.left + leftAdjustment
+                });
+
+                methods.nub_position($nub, settings.tipSettings.nubPosition, 'top');
+
+            }
+            else if (methods.insideRight()) {
+
+                settings.$next_tip.css({
+                    top: (targetOffset.top + nub_height + topAdjustment),
+                    left: settings.$target.outerWidth() + targetOffset.left + leftAdjustment - settings.$next_tip.outerWidth()
+                });
+
+                methods.nub_position($nub, settings.tipSettings.nubPosition, 'top-right');
 
             }
 
@@ -523,7 +568,8 @@
               $nub.removeClass('bottom')
                 .removeClass('top')
                 .removeClass('right')
-                .removeClass('left');
+                .removeClass('left')
+                .removeClass('top-right');
 
               settings.tipSettings.tipLocation = settings.tipSettings.tipLocationPattern[settings.attempts];
 
@@ -531,6 +577,20 @@
 
               methods.pos_default(true);
 
+            }
+
+            var cornersInvisible = methods.corners(settings.$next_tip);
+            if (!methods.visible(cornersInvisible)) {
+                //Still not visible, try to center.
+                if (cornersInvisible[3]) {
+                    //left is not visible
+                    settings.$next_tip.css({
+                        left: settings.$window.scrollLeft()
+                    });
+                    
+                    methods.nub_position($nub, settings.tipSettings.nubPosition, 'top');
+                    $nub.css({ left: targetOffset.left - settings.$next_tip.offset().left });
+                }
             }
 
         } else if (settings.$li.length) {
@@ -545,6 +605,22 @@
         }
 
       },
+
+      correctOffset: function(element) {
+          var targetOffset = element.offset();
+          var parent = element.parent();
+          var parentOffset = parent ? parent.offset() : null;
+          
+          if (parentOffset) {
+              if (targetOffset.top < parentOffset.top) {
+                  targetOffset.top = parentOffset.top;
+              }
+              if (targetOffset.left < parentOffset.left) {
+                  targetOffset.left = parentOffset.left;
+              }
+          }
+          return targetOffset;
+      }, 
 
       pos_phone : function (init) {
         var tip_height = settings.$next_tip.outerHeight(),
@@ -631,9 +707,10 @@
         }
         expose = $(settings.template.expose);
         settings.$body.append(expose);
+        var elementOffset = this.correctOffset(el);
         expose.css({
-          top: el.offset().top,
-          left: el.offset().left,
+          top: elementOffset.top,
+          left: elementOffset.left,
           width: el.outerWidth(true),
           height: el.outerHeight(true)
         });
@@ -648,8 +725,8 @@
         }
         el.data('expose-css',origCSS);
         exposeCover.css({
-          top: el.offset().top,
-          left: el.offset().left,
+          top: elementOffset.top,
+          left: elementOffset.left,
           width: el.outerWidth(true),
           height: el.outerHeight(true)
         });
@@ -749,31 +826,44 @@
       },
 
       bottom : function () {
-        return /bottom/i.test(settings.tipSettings.tipLocation);
+        return /^bottom$/i.test(settings.tipSettings.tipLocation);
+      },
+      
+      bottomRight : function () {
+          return /^bottom-right$/i.test(settings.tipSettings.tipLocation);
       },
 
       top : function () {
-        return /top/i.test(settings.tipSettings.tipLocation);
+        return /^top$/i.test(settings.tipSettings.tipLocation);
       },
 
       right : function () {
-        return /right/i.test(settings.tipSettings.tipLocation);
+        return /^right$/i.test(settings.tipSettings.tipLocation);
       },
 
       left : function () {
-        return /left/i.test(settings.tipSettings.tipLocation);
+        return /^left$/i.test(settings.tipSettings.tipLocation);
+      },
+      
+      inside : function () {
+          return /^inside$/i.test(settings.tipSettings.tipLocation);
+      },
+      
+      insideRight : function () {
+          return /^inside-right$/i.test(settings.tipSettings.tipLocation);
       },
 
       corners : function (el) {
         var w = settings.$window,
-            window_half = w.height() / 2,
-            tipOffset = Math.ceil(settings.$target.offset().top - window_half + settings.$next_tip.outerHeight()),//using this to calculate since scroll may not have finished yet.
+            //window_half = w.height() / 2,
+            //tipOffset = Math.ceil(settings.$target.offset().top - window_half + settings.$next_tip.outerHeight()),//using this to calculate since scroll may not have finished yet.
             right = w.width() + w.scrollLeft(),
-            offsetBottom =  w.height() + tipOffset,
+            //offsetBottom =  w.height() + tipOffset,
             bottom = w.height() + w.scrollTop(),
             top = w.scrollTop();
 
-            if(tipOffset < top){
+           // We don't want window to be scrolled if help doesn't fit the screen.
+            /*if(tipOffset < top){
               if (tipOffset <0 ){
                 top = 0;
               } else {
@@ -783,7 +873,7 @@
 
             if(offsetBottom > bottom){
               bottom = offsetBottom;
-            }
+            }*/
 
         return [
           el.offset().top < top,
@@ -823,14 +913,7 @@
         }
       },
 
-      end : function (isAborted) {
-        isAborted = isAborted || false;
-
-        // Unbind resize events.
-        if (isAborted) {
-          settings.$window.unbind('resize.joyride');
-        }
-
+      end : function () {
         if (settings.cookieMonster) {
           $.cookie(settings.cookieName, 'ridden', { expires: 365, domain: settings.cookieDomain, path: settings.cookiePath });
         }
@@ -849,8 +932,8 @@
           settings.$current_tip.hide();
         }
         if (settings.$li) {
-          settings.postStepCallback(settings.$li.index(), settings.$current_tip, isAborted);
-          settings.postRideCallback(settings.$li.index(), settings.$current_tip, isAborted);
+          settings.postStepCallback(settings.$li.index(), settings.$current_tip);
+          settings.postRideCallback(settings.$li.index(), settings.$current_tip);
         }
         $('.joyride-modal-bg').hide();
       },
@@ -892,7 +975,7 @@
               // Escape key.
               event.keyCode === 27 ) {
             event.preventDefault();
-            methods.end(true /* isAborted */);
+            methods.end();
             return;
           }
 
